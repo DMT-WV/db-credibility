@@ -1,196 +1,665 @@
-
-<h2 class="sr-only">한남슈퍼 마스터 데이터베이스 신뢰도 평가 대시보드</h2>
-
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HNS 마스터 DB 신뢰도 평가</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-.dash { font-family: var(--font-sans); padding: 1.5rem 0; }
-.section-title { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px; }
-.metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px 16px; }
-.metric-label { font-size: 12px; color: var(--color-text-secondary); margin: 0 0 4px; }
-.metric-val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); margin: 0; line-height: 1.1; }
-.metric-sub { font-size: 11px; color: var(--color-text-tertiary); margin: 4px 0 0; }
-.grade-pill { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 10px; border-radius: 20px; }
-.g-a  { background: #EAF3DE; color: #3B6D11; }
-.g-b  { background: #FAEEDA; color: #854F0B; }
-.g-c  { background: #FCEBEB; color: #A32D2D; }
-.g-d  { background: #F1EFE8; color: #5F5E5A; }
-.area-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-.area-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 16px; }
-.area-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.area-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
-.score-bar-bg { background: var(--color-border-tertiary); border-radius: 4px; height: 6px; margin: 6px 0 10px; }
-.score-bar { height: 6px; border-radius: 4px; }
-.row-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-top: 0.5px solid var(--color-border-tertiary); }
-.row-label { font-size: 12px; color: var(--color-text-secondary); }
-.row-val { font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
-.row-good { color: #3B6D11; }
-.row-warn { color: #854F0B; }
-.row-bad  { color: #A32D2D; }
-.issue-box { background: var(--color-background-secondary); border-left: 3px solid #E24B4A; border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; padding: 10px 14px; margin-bottom: 8px; }
-.issue-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin: 0 0 2px; }
-.issue-desc { font-size: 12px; color: var(--color-text-secondary); margin: 0; }
-.issue-warn { border-left-color: #EF9F27; }
-.overall { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }
-.overall-score { font-size: 52px; font-weight: 500; color: var(--color-text-primary); line-height: 1; }
-.overall-grade { font-size: 20px; font-weight: 500; color: #854F0B; }
-.overall-desc { font-size: 13px; color: var(--color-text-secondary); margin: 4px 0 0; }
-.radar-wrap { display: flex; justify-content: center; margin: 8px 0; }
-.flag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-.flag { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--color-background-secondary); color: var(--color-text-secondary); }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --font: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --bg: #F4F5F7;
+    --surface: #FFFFFF;
+    --border: #E2E4E9;
+    --border-mid: #CDD0D8;
+    --text-primary: #181A1F;
+    --text-secondary: #555B6A;
+    --text-muted: #8A90A0;
+    --green: #2E7D32;
+    --green-bg: #E8F5E9;
+    --amber: #7B4D00;
+    --amber-bg: #FFF3E0;
+    --red: #B71C1C;
+    --red-bg: #FFEBEE;
+    --blue: #0D47A1;
+    --blue-mid: #1976D2;
+    --blue-light: #E3F2FD;
+    --gray-bg: #F0F2F5;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+  }
+
+  /* 페이지 헤더 */
+  .page-header {
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .page-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .page-date {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* 섹션 레이블 */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    margin-top: 28px;
+  }
+
+  /* 종합 점수 헤더 */
+  .hero-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .score-card {
+    background: var(--text-primary);
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .score-number {
+    font-size: 60px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -2px;
+  }
+  .score-denom {
+    font-size: 22px;
+    font-weight: 400;
+    opacity: .45;
+  }
+  .score-grade {
+    font-size: 14px;
+    font-weight: 500;
+    color: #FAC775;
+    margin-top: 8px;
+  }
+  .score-desc {
+    font-size: 12px;
+    opacity: .65;
+    margin-top: 6px;
+    line-height: 1.6;
+  }
+  .radar-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .radar-card canvas {
+    max-height: 240px;
+  }
+
+  /* KPI 그리드 */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .kpi-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+  }
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  /* 영역 카드 그리드 */
+  .area-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .area-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .area-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .area-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .area-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+  .b-green { background: var(--green-bg); color: var(--green); }
+  .b-amber { background: var(--amber-bg); color: var(--amber); }
+  .b-red   { background: var(--red-bg);   color: var(--red);   }
+
+  /* 바 게이지 */
+  .bar-bg {
+    background: var(--gray-bg);
+    border-radius: 4px;
+    height: 6px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 6px;
+    border-radius: 4px;
+    transition: width .6s ease;
+  }
+
+  /* 영역 내 행 */
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 5px 0;
+    border-top: 1px solid var(--border);
+  }
+  .detail-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .detail-val {
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .c-green { color: var(--green); }
+  .c-amber { color: #A05A00; }
+  .c-red   { color: var(--red); }
+  .c-muted { color: var(--text-muted); }
+
+  /* 이슈 박스 */
+  .issue-list { display: flex; flex-direction: column; gap: 8px; }
+  .issue {
+    display: flex;
+    gap: 14px;
+    padding: 13px 16px;
+    border-radius: var(--radius);
+    border-left: 4px solid transparent;
+  }
+  .issue-red   { background: var(--red-bg);   border-left-color: var(--red);   }
+  .issue-amber { background: var(--amber-bg); border-left-color: #E65100; }
+  .issue-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  .dot-red   { background: var(--red); }
+  .dot-amber { background: #E65100; }
+  .issue-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+  .issue-red   .issue-title { color: var(--red); }
+  .issue-amber .issue-title { color: #7B3100; }
+  .issue-body {
+    font-size: 12px;
+    line-height: 1.65;
+  }
+  .issue-red   .issue-body { color: #7B1A1A; }
+  .issue-amber .issue-body { color: #5D3200; }
+
+  /* 플래그 태그 */
+  .flag-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
+  .flag-tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border-mid);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .flag-count {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 12px;
+  }
+
+  /* 하단 총점 요약 바 */
+  .summary-bar {
+    margin-top: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .summary-bar-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .score-bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .score-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .score-bar-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    width: 80px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .score-bar-track {
+    flex: 1;
+    background: var(--gray-bg);
+    border-radius: 3px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .score-bar-fill { height: 8px; border-radius: 3px; }
+  .score-bar-num {
+    font-size: 11px;
+    font-weight: 700;
+    width: 30px;
+    text-align: right;
+  }
 </style>
+</head>
+<body>
+<div class="page">
 
-<div class="dash">
-
-  <div class="overall">
+  <div class="page-header">
     <div>
-      <div class="overall-score">72<span style="font-size:28px; color: var(--color-text-secondary);">/100</span></div>
-      <div class="overall-grade">등급 B− &nbsp;·&nbsp; 조건부 사용 가능</div>
-      <div class="overall-desc">ALF 챗봇 운영에 필요한 기본 정확도는 충족.<br>단, 아래 주요 이슈 해소 후 신뢰도 상승 여지 있음.</div>
+      <div class="page-title">HNS 마스터 DB — 신뢰도 평가 리포트</div>
+      <div class="page-sub">Hannam_MASTER_V16_Final.xlsx 기준 | 총 10,500 SKU</div>
     </div>
-    <div style="flex:1; min-width:0;">
-      <div style="display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; text-align:center;">
-        <div><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:4px;">바코드</div><div style="font-size:18px; font-weight:500;">88<span style="font-size:12px; color:var(--color-text-secondary);">점</span></div></div>
-        <div><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:4px;">카테고리</div><div style="font-size:18px; font-weight:500;">82<span style="font-size:12px; color:var(--color-text-secondary);">점</span></div></div>
-        <div><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:4px;">가격</div><div style="font-size:18px; font-weight:500;">68<span style="font-size:12px; color:var(--color-text-secondary);">점</span></div></div>
-        <div><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:4px;">브랜드</div><div style="font-size:18px; font-weight:500;">75<span style="font-size:12px; color:var(--color-text-secondary);">점</span></div></div>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; text-align:center; margin-top:8px;">
-        <div><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:4px;">판매데이터</div><div style="font-size:18px; font-weight:500;">42<span style="font-size:12px; color:var(--color-text-secondary);">점</span></div></div>
-        <div><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:4px;">번들/CS</div><div style="font-size:18px; font-weight:500;">71<span style="font-size:12px; color:var(--color-text-secondary);">점</span></div></div>
-        <div><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:4px;">상품명</div><div style="font-size:18px; font-weight:500;">91<span style="font-size:12px; color:var(--color-text-secondary);">점</span></div></div>
-        <div><div style="font-size:11px; color: var(--color-text-tertiary); margin-bottom:4px;">ALF활용도</div><div style="font-size:18px; font-weight:500;">83<span style="font-size:12px; color:var(--color-text-secondary);">점</span></div></div>
-      </div>
+    <div class="page-date">2026년 5월 기준</div>
+  </div>
+
+  <!-- 히어로 -->
+  <div class="hero-row">
+    <div class="score-card">
+      <div class="score-number">72<span class="score-denom">/100</span></div>
+      <div class="score-grade">등급 B− &nbsp;·&nbsp; 조건부 사용 가능</div>
+      <div class="score-desc">ALF 챗봇 기본 운영 가능.<br>판매데이터·원가 보완 후 완성도 상승.</div>
+    </div>
+    <div class="radar-card">
+      <canvas id="radarChart" role="img" aria-label="8개 영역 신뢰도 레이더 차트 — 상품명 91, 바코드 88, ALF 83, 카테고리 82, 번들 71, 브랜드 75, 가격 68, 판매데이터 42"></canvas>
     </div>
   </div>
 
-  <div class="metric-row">
-    <div class="metric">
-      <div class="metric-label">전체 SKU</div>
-      <div class="metric-val">10,500</div>
-      <div class="metric-sub">바코드 9,243 + PLU 1,237</div>
+  <!-- KPI -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">전체 SKU</div>
+      <div class="kpi-val">10,500</div>
+      <div class="kpi-sub">바코드 9,243 + PLU 1,257</div>
     </div>
-    <div class="metric">
-      <div class="metric-label">카테고리 신뢰도 90점↑</div>
-      <div class="metric-val">82.2%</div>
-      <div class="metric-sub">8,628개 높음 / 1,872개 보통</div>
+    <div class="kpi">
+      <div class="kpi-label">카테고리 신뢰도 90↑</div>
+      <div class="kpi-val">82.2%</div>
+      <div class="kpi-sub">8,628개 높음 / 1,872개 보통</div>
     </div>
-    <div class="metric">
-      <div class="metric-label">브랜드 입력률</div>
-      <div class="metric-val">85.2%</div>
-      <div class="metric-sub">실질 미입력 7.3% (765개)</div>
+    <div class="kpi">
+      <div class="kpi-label">브랜드 입력률</div>
+      <div class="kpi-val">85.2%</div>
+      <div class="kpi-sub">실질 미입력 765개 (7.3%)</div>
     </div>
-    <div class="metric">
-      <div class="metric-label">검토플래그 있는 항목</div>
-      <div class="metric-val">66.8%</div>
-      <div class="metric-sub">7,009개 — AI 재분류 이력</div>
+    <div class="kpi">
+      <div class="kpi-label">검토플래그 항목</div>
+      <div class="kpi-val">66.8%</div>
+      <div class="kpi-sub">7,009개 — AI 재분류 이력</div>
     </div>
   </div>
 
-  <div class="section-title">영역별 상세 평가</div>
+  <!-- 영역별 카드 -->
+  <div class="section-label">영역별 상세 평가</div>
   <div class="area-grid">
 
     <div class="area-card">
-      <div class="area-header"><span class="area-name">① 바코드 / 식별자</span><span class="grade-pill g-a">A − 88점</span></div>
-      <div class="score-bar-bg"><div class="score-bar" style="width:88%; background:#639922;"></div></div>
-      <div class="row-item"><span class="row-label">바코드 유형</span><span class="row-val">표준바코드 88% / PLU 12%</span></div>
-      <div class="row-item"><span class="row-label">중복 바코드 (다른 상품)</span><span class="row-val row-warn">7개 충돌 — 확인 필요</span></div>
-      <div class="row-item"><span class="row-label">바코드 형식 이상</span><span class="row-val row-good">21개 (내부코드, 정상)</span></div>
-      <div class="row-item"><span class="row-label">BARCODE_CONFLICT 플래그</span><span class="row-val row-warn">12건</span></div>
+      <div class="area-top">
+        <div class="area-name">
+          <div class="area-icon" style="background:#E3F2FD;color:#1565C0">바</div>
+          바코드 / 식별자
+        </div>
+        <span class="badge b-green">A− 88점</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:88%;background:#2E7D32"></div></div>
+      <div class="detail-row"><span class="detail-label">표준바코드 비율</span><span class="detail-val c-green">88%</span></div>
+      <div class="detail-row"><span class="detail-label">중복 바코드 충돌</span><span class="detail-val c-amber">7개 — 확인 필요</span></div>
+      <div class="detail-row"><span class="detail-label">BARCODE_CONFLICT 플래그</span><span class="detail-val c-amber">12건</span></div>
     </div>
 
     <div class="area-card">
-      <div class="area-header"><span class="area-name">② 상품명</span><span class="grade-pill g-a">A 91점</span></div>
-      <div class="score-bar-bg"><div class="score-bar" style="width:91%; background:#639922;"></div></div>
-      <div class="row-item"><span class="row-label">영문명 누락</span><span class="row-val row-good">4개 (0.04%)</span></div>
-      <div class="row-item"><span class="row-label">중복 상품명 (사이즈 차이)</span><span class="row-val">945개 상품명 — 대부분 정상</span></div>
-      <div class="row-item"><span class="row-label">한남슈퍼 자체 상품</span><span class="row-val">746개 식별 완료</span></div>
-      <div class="row-item"><span class="row-label">LOW_CONFIDENCE 플래그</span><span class="row-val row-warn">1,668건</span></div>
+      <div class="area-top">
+        <div class="area-name">
+          <div class="area-icon" style="background:#E8F5E9;color:#2E7D32">명</div>
+          상품명
+        </div>
+        <span class="badge b-green">A 91점</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:91%;background:#2E7D32"></div></div>
+      <div class="detail-row"><span class="detail-label">영문명 누락</span><span class="detail-val c-green">4개 (0.04%)</span></div>
+      <div class="detail-row"><span class="detail-label">중복 상품명 (사이즈 차이)</span><span class="detail-val c-muted">945개 — 대부분 정상</span></div>
+      <div class="detail-row"><span class="detail-label">LOW_CONFIDENCE 플래그</span><span class="detail-val c-amber">1,668건</span></div>
     </div>
 
     <div class="area-card">
-      <div class="area-header"><span class="area-name">③ 카테고리 분류</span><span class="grade-pill g-b">B+ 82점</span></div>
-      <div class="score-bar-bg"><div class="score-bar" style="width:82%; background:#EF9F27;"></div></div>
-      <div class="row-item"><span class="row-label">카테고리 신뢰도 평균</span><span class="row-val">92.3점 / 100</span></div>
-      <div class="row-item"><span class="row-label">CATEGORY_REVIEW 플래그</span><span class="row-val row-warn">2,627건 — AI 재분류 의심</span></div>
-      <div class="row-item"><span class="row-label">HIGH_RISK_REVIEW</span><span class="row-val row-bad">147건</span></div>
-      <div class="row-item"><span class="row-label">V16 수정으로 해소</span><span class="row-val row-good">1,336건 수정 완료</span></div>
+      <div class="area-top">
+        <div class="area-name">
+          <div class="area-icon" style="background:#FFF3E0;color:#E65100">분</div>
+          카테고리 분류
+        </div>
+        <span class="badge b-amber">B+ 82점</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:82%;background:#E65100"></div></div>
+      <div class="detail-row"><span class="detail-label">카테고리 신뢰도 평균</span><span class="detail-val c-green">92.3점</span></div>
+      <div class="detail-row"><span class="detail-label">CATEGORY_REVIEW 플래그</span><span class="detail-val c-amber">2,627건</span></div>
+      <div class="detail-row"><span class="detail-label">V16 수정 완료</span><span class="detail-val c-green">1,336건</span></div>
     </div>
 
     <div class="area-card">
-      <div class="area-header"><span class="area-name">④ 가격 / 할인율</span><span class="grade-pill g-c">C+ 68점</span></div>
-      <div class="score-bar-bg"><div class="score-bar" style="width:68%; background:#E24B4A;"></div></div>
-      <div class="row-item"><span class="row-label">정가 &lt; 판매가 역전</span><span class="row-val row-bad">30개 — 사람이 확인 필요</span></div>
-      <div class="row-item"><span class="row-label">가격 0원</span><span class="row-val row-warn">10개</span></div>
-      <div class="row-item"><span class="row-label">원가 입력률</span><span class="row-val row-bad">0% — 전혀 없음</span></div>
-      <div class="row-item"><span class="row-label">HIGH_DISCOUNT_CHECK</span><span class="row-val row-warn">352건</span></div>
+      <div class="area-top">
+        <div class="area-name">
+          <div class="area-icon" style="background:#FFEBEE;color:#B71C1C">가</div>
+          가격 / 할인율
+        </div>
+        <span class="badge b-red">C+ 68점</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:68%;background:#B71C1C"></div></div>
+      <div class="detail-row"><span class="detail-label">정가 &lt; 판매가 역전</span><span class="detail-val c-red">30개</span></div>
+      <div class="detail-row"><span class="detail-label">가격 0원 항목</span><span class="detail-val c-amber">10개</span></div>
+      <div class="detail-row"><span class="detail-label">원가 입력률</span><span class="detail-val c-red">0% — 전혀 없음</span></div>
     </div>
 
     <div class="area-card">
-      <div class="area-header"><span class="area-name">⑤ 브랜드</span><span class="grade-pill g-b">B 75점</span></div>
-      <div class="score-bar-bg"><div class="score-bar" style="width:75%; background:#EF9F27;"></div></div>
-      <div class="row-item"><span class="row-label">브랜드 입력 (자동채움 포함)</span><span class="row-val row-good">8,945개 (85.2%)</span></div>
-      <div class="row-item"><span class="row-label">신선품 NaN (정상)</span><span class="row-val row-good">790개</span></div>
-      <div class="row-item"><span class="row-label">실질 미입력</span><span class="row-val row-warn">765개 (7.3%)</span></div>
-      <div class="row-item"><span class="row-label">브랜드 신뢰도 70점 미만</span><span class="row-val row-bad">1,348개 (12.8%)</span></div>
+      <div class="area-top">
+        <div class="area-name">
+          <div class="area-icon" style="background:#FFF3E0;color:#E65100">브</div>
+          브랜드
+        </div>
+        <span class="badge b-amber">B 75점</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:75%;background:#E65100"></div></div>
+      <div class="detail-row"><span class="detail-label">브랜드 입력 (자동채움 포함)</span><span class="detail-val c-green">85.2%</span></div>
+      <div class="detail-row"><span class="detail-label">신선품 NaN (정상)</span><span class="detail-val c-muted">790개</span></div>
+      <div class="detail-row"><span class="detail-label">실질 미입력</span><span class="detail-val c-amber">765개 (7.3%)</span></div>
     </div>
 
     <div class="area-card">
-      <div class="area-header"><span class="area-name">⑥ 판매 데이터</span><span class="grade-pill g-c">C− 42점</span></div>
-      <div class="score-bar-bg"><div class="score-bar" style="width:42%; background:#E24B4A;"></div></div>
-      <div class="row-item"><span class="row-label">판매수량=1 (최소/더미)</span><span class="row-val row-bad">99.0% (10,396개)</span></div>
-      <div class="row-item"><span class="row-label">다수 판매 확인된 것</span><span class="row-val">84개 (0.8%)</span></div>
-      <div class="row-item"><span class="row-label">인기지표 평균</span><span class="row-val">0.33 (최대 50.3)</span></div>
-      <div class="row-item"><span class="row-label">실판매 데이터 신뢰성</span><span class="row-val row-bad">POS 원시 데이터 재연동 필요</span></div>
+      <div class="area-top">
+        <div class="area-name">
+          <div class="area-icon" style="background:#FFEBEE;color:#B71C1C">판</div>
+          판매 데이터
+        </div>
+        <span class="badge b-red">C− 42점</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:42%;background:#B71C1C"></div></div>
+      <div class="detail-row"><span class="detail-label">판매수량=1 더미</span><span class="detail-val c-red">99.0% (10,396개)</span></div>
+      <div class="detail-row"><span class="detail-label">다수 판매 확인</span><span class="detail-val c-muted">84개 (0.8%)</span></div>
+      <div class="detail-row"><span class="detail-label">POS 연동 여부</span><span class="detail-val c-red">미연동</span></div>
     </div>
 
     <div class="area-card">
-      <div class="area-header"><span class="area-name">⑦ 번들 / 크로스셀</span><span class="grade-pill g-b">B− 71점</span></div>
-      <div class="score-bar-bg"><div class="score-bar" style="width:71%; background:#EF9F27;"></div></div>
-      <div class="row-item"><span class="row-label">번들 입력률</span><span class="row-val row-good">99.1%</span></div>
-      <div class="row-item"><span class="row-label">번들역할 다양성</span><span class="row-val row-warn">메인/단품만 (2종류뿐)</span></div>
-      <div class="row-item"><span class="row-label">판매우선순위 다양성</span><span class="row-val row-warn">P3/P4만 — P1/P2 없음</span></div>
-      <div class="row-item"><span class="row-label">V16에서 카테고리 불일치 수정</span><span class="row-val row-good">437건 재매핑 완료</span></div>
+      <div class="area-top">
+        <div class="area-name">
+          <div class="area-icon" style="background:#FFF3E0;color:#E65100">번</div>
+          번들 / 크로스셀
+        </div>
+        <span class="badge b-amber">B− 71점</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:71%;background:#E65100"></div></div>
+      <div class="detail-row"><span class="detail-label">번들 입력률</span><span class="detail-val c-green">99.1%</span></div>
+      <div class="detail-row"><span class="detail-label">번들역할 다양성</span><span class="detail-val c-amber">메인/단품만 (2종류)</span></div>
+      <div class="detail-row"><span class="detail-label">판매우선순위</span><span class="detail-val c-amber">P3/P4만 — P1/P2 없음</span></div>
     </div>
 
     <div class="area-card">
-      <div class="area-header"><span class="area-name">⑧ ALF 챗봇 활용 적합도</span><span class="grade-pill g-a">A− 83점</span></div>
-      <div class="score-bar-bg"><div class="score-bar" style="width:83%; background:#639922;"></div></div>
-      <div class="row-item"><span class="row-label">ALF챗봇_태그 생성</span><span class="row-val row-good">10,500개 전체</span></div>
-      <div class="row-item"><span class="row-label">추천문구 (CAD$ 표기)</span><span class="row-val row-good">10,500개 전체</span></div>
-      <div class="row-item"><span class="row-label">주간세일 입력 준비</span><span class="row-val row-good">템플릿 완성</span></div>
-      <div class="row-item"><span class="row-label">검색 키워드 품질</span><span class="row-val row-warn">AI 생성 — 실검증 미완</span></div>
+      <div class="area-top">
+        <div class="area-name">
+          <div class="area-icon" style="background:#E3F2FD;color:#1565C0">AI</div>
+          ALF 챗봇 적합도
+        </div>
+        <span class="badge b-green">A− 83점</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:83%;background:#1976D2"></div></div>
+      <div class="detail-row"><span class="detail-label">ALF챗봇 태그 생성</span><span class="detail-val c-green">10,500개 전체</span></div>
+      <div class="detail-row"><span class="detail-label">주간세일 템플릿</span><span class="detail-val c-green">완성</span></div>
+      <div class="detail-row"><span class="detail-label">검색 키워드 품질</span><span class="detail-val c-amber">AI생성 — 실검증 미완</span></div>
     </div>
 
   </div>
 
-  <div class="section-title">지금 당장 해결해야 할 이슈</div>
+  <!-- 즉시 해결 이슈 -->
+  <div class="section-label">즉시 해결 필요 이슈</div>
+  <div class="issue-list">
+    <div class="issue issue-red">
+      <div class="issue-dot dot-red"></div>
+      <div>
+        <div class="issue-title">판매 데이터 99%가 수량=1 — POS 재연동 시급</div>
+        <div class="issue-body">총판매수량·거래횟수 거의 전부 더미 데이터. ALF 인기 추천이 실매출 기반이 아님. POS 판매이력 주기적 연동 파이프라인 구축 필요.</div>
+      </div>
+    </div>
+    <div class="issue issue-red">
+      <div class="issue-dot dot-red"></div>
+      <div>
+        <div class="issue-title">원가 데이터 0% — 마진율 계산 전혀 불가</div>
+        <div class="issue-body">원가 컬럼 10,500개 전부 공백. 마진율·마진우선순위 컬럼 의미 없음. 구매팀 원가 일괄 입력 필요.</div>
+      </div>
+    </div>
+    <div class="issue issue-amber">
+      <div class="issue-dot dot-amber"></div>
+      <div>
+        <div class="issue-title">가격 역전 30개 — 실장님 직접 확인 필요</div>
+        <div class="issue-body">정가보다 판매가가 높은 항목 30개 (한남 꽈배기, 로메인 상추 등). 개당가 오입력 또는 실판매가 여부 실물 확인 필요.</div>
+      </div>
+    </div>
+    <div class="issue issue-amber">
+      <div class="issue-dot dot-amber"></div>
+      <div>
+        <div class="issue-title">바코드 충돌 7건 — 서로 다른 상품이 같은 바코드 공유</div>
+        <div class="issue-body">바코드 4041이 '굿모닝 빵'과 '빅대디 자두' 동시 할당 등. ALF 바코드 조회 시 오답 발생 가능. PLU 코드 재정비 필요.</div>
+      </div>
+    </div>
+  </div>
 
-  <div class="issue-box">
-    <div class="issue-title">🔴 판매 데이터 99%가 수량=1 — POS 재연동 필요</div>
-    <div class="issue-desc">현재 총판매수량·거래횟수가 거의 전부 1로 채워진 더미 데이터. ALF가 "인기 상품" 추천 시 실제 매출 기반이 아닌 인위적 수치로 추천하게 됨. POS 시스템에서 실 판매이력을 주기적으로 연동하는 파이프라인 구축이 시급.</div>
-  </div>
-  <div class="issue-box">
-    <div class="issue-title">🔴 원가 데이터 0% — 마진율 계산 불가</div>
-    <div class="issue-desc">원가 컬럼이 전체 10,500개 전부 비어있음. 마진율·마진우선순위가 의미 없는 상태. 바이어/구매팀에서 원가 입력 필요.</div>
-  </div>
-  <div class="issue-box issue-warn">
-    <div class="issue-title">🟡 가격 역전 30개 — 실장님 직접 확인 필요</div>
-    <div class="issue-desc">정가보다 판매가가 높은 30개 항목 (한남 꽈배기, 로메인 상추, 순두부 등). 개당 가격 오입력 or 실제 판매가가 맞는지 실물 확인 필요.</div>
-  </div>
-  <div class="issue-box issue-warn">
-    <div class="issue-title">🟡 바코드 충돌 7건 — 다른 상품이 같은 바코드 공유</div>
-    <div class="issue-desc">예: 바코드 4041이 '굿모닝 빵'과 '빅대디 자두' 두 상품에 동시 할당. ALF가 바코드로 조회 시 오답 발생 가능. PLU 코드 재정비 필요.</div>
+  <!-- 플래그 -->
+  <div class="section-label">검토 플래그 현황</div>
+  <div class="flag-wrap">
+    <span class="flag-tag">V14_RECLASSIFIED <span class="flag-count">5,635</span></span>
+    <span class="flag-tag">CATEGORY_REVIEW <span class="flag-count">2,627</span></span>
+    <span class="flag-tag">V15_RECLASSIFIED <span class="flag-count">2,240</span></span>
+    <span class="flag-tag">LOW_CONFIDENCE <span class="flag-count">1,668</span></span>
+    <span class="flag-tag">HIGH_DISCOUNT_CHECK <span class="flag-count">352</span></span>
+    <span class="flag-tag">HIGH_RISK_REVIEW <span class="flag-count">147</span></span>
+    <span class="flag-tag">BARCODE_CONFLICT <span class="flag-count">12</span></span>
   </div>
 
-  <div class="section-title">검토 플래그 현황</div>
-  <div class="flag-row">
-    <span class="flag">V14_RECLASSIFIED 5,635개</span>
-    <span class="flag">CATEGORY_REVIEW 2,627개</span>
-    <span class="flag">V15_RECLASSIFIED 2,240개</span>
-    <span class="flag">LOW_CONFIDENCE 1,668개</span>
-    <span class="flag">HIGH_DISCOUNT_CHECK 352개</span>
-    <span class="flag">HIGH_RISK_REVIEW 147개</span>
-    <span class="flag">BARCODE_CONFLICT 12개</span>
+  <!-- 총점 비교 바 -->
+  <div class="summary-bar">
+    <div class="summary-bar-label">영역별<br>점수 비교</div>
+    <div class="score-bar-wrap">
+      <div class="score-bar-item">
+        <span class="score-bar-name">상품명</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:91%;background:#2E7D32"></div></div>
+        <span class="score-bar-num" style="color:#2E7D32">91</span>
+      </div>
+      <div class="score-bar-item">
+        <span class="score-bar-name">바코드</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:88%;background:#2E7D32"></div></div>
+        <span class="score-bar-num" style="color:#2E7D32">88</span>
+      </div>
+      <div class="score-bar-item">
+        <span class="score-bar-name">ALF 적합도</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:83%;background:#1976D2"></div></div>
+        <span class="score-bar-num" style="color:#1976D2">83</span>
+      </div>
+      <div class="score-bar-item">
+        <span class="score-bar-name">카테고리</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:82%;background:#E65100"></div></div>
+        <span class="score-bar-num" style="color:#E65100">82</span>
+      </div>
+      <div class="score-bar-item">
+        <span class="score-bar-name">브랜드</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:75%;background:#E65100"></div></div>
+        <span class="score-bar-num" style="color:#E65100">75</span>
+      </div>
+      <div class="score-bar-item">
+        <span class="score-bar-name">번들/CS</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:71%;background:#E65100"></div></div>
+        <span class="score-bar-num" style="color:#E65100">71</span>
+      </div>
+      <div class="score-bar-item">
+        <span class="score-bar-name">가격</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:68%;background:#B71C1C"></div></div>
+        <span class="score-bar-num" style="color:#B71C1C">68</span>
+      </div>
+      <div class="score-bar-item">
+        <span class="score-bar-name">판매데이터</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:42%;background:#B71C1C"></div></div>
+        <span class="score-bar-num" style="color:#B71C1C">42</span>
+      </div>
+    </div>
   </div>
 
 </div>
+
+<script>
+var ctx = document.getElementById('radarChart').getContext('2d');
+new Chart(ctx, {
+  type: 'radar',
+  data: {
+    labels: ['상품명', '바코드', 'ALF 적합도', '카테고리', '브랜드', '번들/CS', '가격', '판매데이터'],
+    datasets: [{
+      label: '신뢰도 점수',
+      data: [91, 88, 83, 82, 75, 71, 68, 42],
+      backgroundColor: 'rgba(25,118,210,0.10)',
+      borderColor: '#1976D2',
+      borderWidth: 2,
+      pointBackgroundColor: '#1976D2',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      pointRadius: 5,
+      pointHoverRadius: 7
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      r: {
+        min: 0,
+        max: 100,
+        ticks: {
+          stepSize: 25,
+          font: { size: 10, family: "'Noto Sans KR', sans-serif" },
+          color: '#8A90A0',
+          backdropColor: 'transparent'
+        },
+        pointLabels: {
+          font: { size: 11, family: "'Noto Sans KR', sans-serif", weight: '500' },
+          color: '#555B6A'
+        },
+        grid: { color: 'rgba(0,0,0,0.07)' },
+        angleLines: { color: 'rgba(0,0,0,0.07)' }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
